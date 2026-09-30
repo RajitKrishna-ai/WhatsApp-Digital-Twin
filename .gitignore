@@ -1,0 +1,7 @@
+node_modules/
+auth_info/
+.env
+contacts.json
+logs.jsonl
+chats/
+style-profile.json
