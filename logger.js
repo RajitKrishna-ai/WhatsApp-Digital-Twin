@@ -1,18 +1,22 @@
-const fs = require('fs')
+const { supabase } = require('./db')
 
-const LOG_FILE = 'logs.jsonl'
-
-function logEvent(entry) {
-    const line = JSON.stringify({time: new Date(). toISOString(), ...entry})
-    fs.appendFileSync(LOG_FILE, line + '\n')
+async function logEvent(entry) {
+  const { error } = await supabase.from('logs').insert(entry)
+  if (error) console.log('⚠️ Could not save log:', error.message)
 }
 
-function readRecent(count =10) {
-    try {
-        const line = fs.readFileSync(LOG_FILE,'utf8').trim().split('\n').filter(Boolean)
-        return line.slice(-count).map((l) => JSON.parse(l))
-    } catch (err) {
-        return []
-    }
+async function readRecent(count = 10) {
+  const { data, error } = await supabase
+    .from('logs')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(count)
+
+  if (error) {
+    console.log('⚠️ Could not read logs:', error.message)
+    return []
+  }
+  return data.reverse().map((row) => ({ ...row, time: row.created_at }))
 }
-module.exports= {logEvent,readRecent}
+
+module.exports = { logEvent, readRecent }
